@@ -1,0 +1,6 @@
+{
+  "name": "E2EE Group Chat",
+  "description": "Real-time end-to-end encrypted direct messaging and Microsoft Teams-style channel groups with secure key exchange.",
+  "requestFramePermissions": ["camera", "microphone"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
