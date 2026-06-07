@@ -8,7 +8,11 @@ import {
   AlertTriangle, 
   Send, 
   RefreshCw, 
-  HeartHandshake 
+  HeartHandshake,
+  Smartphone,
+  Share,
+  ExternalLink,
+  Check
 } from 'lucide-react';
 
 import { 
@@ -70,6 +74,12 @@ export default function App() {
   const [isSecurityPanelOpen, setIsSecurityPanelOpen] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
 
+  // Mobile environment and iframe sandbox states
+  const [isIframe, setIsIframe] = useState(false);
+  const [isCryptoBlocked, setIsCryptoBlocked] = useState(false);
+  const [isMobileDevice, setIsMobileDevice] = useState(false);
+  const [showMobileInstallGuide, setShowMobileInstallGuide] = useState(false);
+
   // Calling visual overlay states
   const [isCallOpen, setIsCallOpen] = useState(false);
   const [isCallVideo, setIsCallVideo] = useState(false);
@@ -82,6 +92,15 @@ export default function App() {
 
   // 1. Load active identity from LocalStorage on mount
   useEffect(() => {
+    // Detect environment parameters for mobile/iframe support
+    const inIframe = window.self !== window.top;
+    const cryptoMissing = !window.crypto || !window.crypto.subtle;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    setIsIframe(inIframe);
+    setIsCryptoBlocked(cryptoMissing);
+    setIsMobileDevice(isMobile);
+
     const savedEmail = localStorage.getItem('e2ee_email');
     if (savedEmail) {
       const savedName = localStorage.getItem('e2ee_name') || '';
@@ -865,8 +884,8 @@ export default function App() {
       
       {/* 1. Welcoming Registration & RSA Certificate Preparation screen */}
       {!currentUser ? (
-        <div className="flex-1 flex items-center justify-center bg-[#090a0f] p-6">
-          <div className="w-full max-w-md bg-[#13141f] rounded-2xl border border-slate-800 shadow-2xl p-8 flex flex-col gap-6" id="registration-window">
+        <div className="flex-1 flex flex-col items-center justify-center bg-[#090a0f] p-4 overflow-y-auto">
+          <div className="w-full max-w-md bg-[#13141f] rounded-2xl border border-slate-800 shadow-2xl p-6 sm:p-8 flex flex-col gap-6" id="registration-window">
             
             <div className="text-center flex flex-col gap-2">
               <div className="w-14 h-14 bg-[#4f46e5] text-white p-3 rounded-2xl font-bold flex items-center justify-center text-2xl mx-auto border border-indigo-400">
@@ -877,6 +896,61 @@ export default function App() {
                 Prepare your asymmetric RSA-OAEP 2048 identity keypair locally inside your browser to open teams.
               </p>
             </div>
+
+            {/* Mobile Connection Helper and Installer Card */}
+            {(isIframe || isCryptoBlocked || isMobileDevice) && (
+              <div className="bg-[#1b1c31] border border-[#6264A7]/50 rounded-xl p-4 flex flex-col gap-3 text-xs">
+                <div className="flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-indigo-400 animate-pulse" />
+                  <span className="font-bold text-slate-200">Mobile Download & Connection Hub</span>
+                </div>
+                
+                {isIframe && (
+                  <p className="text-[11px] text-slate-300 leading-relaxed bg-[#6264A7]/10 p-2 rounded-lg border border-[#6264A7]/20">
+                    ⚠️ <strong className="text-indigo-300">Preview restrictions active:</strong> You are currently viewing the workspace inside a sandboxed frame which blocks download protocols, secure crypto layers and service workers on your device.
+                  </p>
+                )}
+
+                <div className="flex flex-col gap-2 mt-1">
+                  {/* Direct Link Button */}
+                  <a 
+                    href={window.location.href} 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-emerald-600 hover:from-indigo-500 hover:to-emerald-500 text-white font-bold py-2.5 px-4 rounded-lg border border-indigo-400/30 text-xs transition-all shadow-md text-center"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                    <span>Open Secure Connection Tab</span>
+                  </a>
+
+                  {/* Installation Help Trigger */}
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileInstallGuide(!showMobileInstallGuide)}
+                    className="text-xs text-[#a5a6df] hover:text-white underline cursor-pointer text-center font-semibold"
+                  >
+                    {showMobileInstallGuide ? "Hide Mobile Installation Guide" : "How to Download & Install like standard Android App?"}
+                  </button>
+
+                  {showMobileInstallGuide && (
+                    <div className="bg-[#10111d] rounded-lg p-3 text-[11px] text-slate-300 leading-relaxed font-sans border border-slate-800 flex flex-col gap-2 mt-2">
+                      <p className="text-[#a5a6df] font-bold">📲 Professional PWA Offline Installation Guide:</p>
+                      <ul className="list-disc list-inside space-y-2 text-slate-300">
+                        <li>
+                          <strong className="text-white">For Android (Chrome):</strong> Open the secure connection tab above, tap the browser menu button <span className="font-mono font-bold bg-slate-800 px-1 py-0.5 rounded text-white text-[9px]">⋮</span> in the top right, and select <span className="text-emerald-400 font-semibold font-sans">"Add to Home screen"</span> or <span className="text-emerald-400 font-semibold font-sans">"Install app"</span>. It will download the secure app sandbox to your device.
+                        </li>
+                        <li>
+                          <strong className="text-white">For iOS / Apple (Safari):</strong> Tap the share icon <span className="font-mono font-bold bg-slate-800 px-1 py-0.5 rounded text-white text-[9px]">⎋</span> (arrow coming out of box) at the bottom, then scroll down and tap <span className="text-emerald-400 font-semibold font-sans">"Add to Home Screen"</span>.
+                        </li>
+                        <li>
+                          <strong className="text-white font-semibold">Offline Access:</strong> This builds a native launcher on your phone, locks screen orientation, handles sandboxed isolation, and delivers swift startup.
+                        </li>
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleKeyCreationSubmit} className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
@@ -909,10 +983,16 @@ export default function App() {
                 </div>
               )}
 
+              {isCryptoBlocked && !isIframe && (
+                <div className="bg-amber-950/40 border border-amber-900/40 text-amber-400 rounded-lg p-3 text-[11px] leading-relaxed">
+                  ⚠️ <strong>Cryptographic API Deficient:</strong> Your Web Browser does not expose secure origin cryptography. Please ensure you are viewing this page on an <strong className="text-white">https://</strong> endpoint.
+                </div>
+              )}
+
               <button
                 type="submit"
-                disabled={isGeneratingKeys}
-                className="w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white py-3 rounded-lg font-semibold tracking-wide disabled:opacity-40 select-none text-xs flex items-center justify-center gap-1.5 transition-all text-center mt-2 border border-indigo-400"
+                disabled={isGeneratingKeys || isCryptoBlocked}
+                className="w-full bg-[#4f46e5] hover:bg-[#4338ca] text-white py-3 rounded-lg font-semibold tracking-wide disabled:opacity-40 select-none text-xs flex items-center justify-center gap-1.5 transition-all text-center mt-2 border border-indigo-400 animate-pulse"
               >
                 {isGeneratingKeys ? (
                   <>
@@ -953,6 +1033,7 @@ export default function App() {
               onLogout={handleLogout}
               onRefreshAll={syncDataLists}
               onCreateGroupChat={handleCreateGroupChat}
+              onShowMobileHelp={() => setShowMobileInstallGuide(true)}
             />
           </div>
 
@@ -1056,6 +1137,103 @@ export default function App() {
             allUsers={allUsers}
             onClose={() => setIsCallOpen(false)}
           />
+
+          {/* Mobile Download & Installation PWA Guide Modal */}
+          {showMobileInstallGuide && (
+            <div className="fixed inset-0 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4 z-50 animate-fade-in" id="mobile-installer-modal">
+              <div className="bg-[#13141f] rounded-2xl border border-slate-800 shadow-2xl p-6 w-full max-w-lg flex flex-col gap-5 text-slate-100">
+                
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-2">
+                    <Smartphone className="w-5 h-5 text-indigo-400 animate-pulse" />
+                    <h2 className="text-base font-bold tracking-tight text-white">Mobile Direct Download & PWA Installer</h2>
+                  </div>
+                  <button 
+                    type="button"
+                    onClick={() => setShowMobileInstallGuide(false)}
+                    className="text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 p-1 rounded-lg transition-colors cursor-pointer text-xs font-bold w-6 h-6 flex items-center justify-center"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="text-xs text-slate-400 flex flex-col gap-3">
+                  <p className="leading-relaxed">
+                    This end-to-end encrypted chat workspace supports full Progressive Web App (PWA) installation. That means you can install this exactly like a standard Android/iOS app from the play store — without needing an App Store!
+                  </p>
+
+                  {isIframe && (
+                    <div className="bg-[#1b1c31] border border-[#6264A7]/50 rounded-xl p-3 flex flex-col gap-2.5">
+                      <p className="text-[11px] text-slate-300 leading-relaxed font-semibold">
+                        ⚠️ Iframe Restrictions Active
+                      </p>
+                      <p className="text-[10px] text-slate-400">
+                        Browsers block direct download/install/service-worker protocols when embedded inside iframes (like the AI Studio development bar). 
+                      </p>
+                      <a 
+                        href={window.location.href} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="flex items-center justify-center gap-2 bg-indigo-600 hover:bg-[#525493] text-white font-bold py-2 rounded-lg transition-all text-center text-xs"
+                      >
+                        <ExternalLink className="w-3.5 h-3.5" />
+                        <span>Open Direct Mobile Connection</span>
+                      </a>
+                    </div>
+                  )}
+
+                  <div className="bg-[#10111d] rounded-xl p-4 border border-slate-800 flex flex-col gap-3.5 mt-1">
+                    <h3 className="font-bold text-slate-200 flex items-center gap-1 text-[11px] uppercase tracking-wide">
+                      📲 Step-by-Step Native Installation Launcher
+                    </h3>
+                    
+                    <div className="flex flex-col gap-3 text-[11px]">
+                      <div className="flex gap-2">
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold w-5 h-5 rounded-full flex items-center justify-center shrink-0">1</div>
+                        <div className="flex flex-col gap-0.5 font-sans">
+                          <strong className="text-white">Android devices (Google Chrome):</strong>
+                          <p className="text-slate-400 leading-relaxed">
+                            Click <strong className="text-[#a5a6df]">"Open Direct Mobile Connection"</strong> above. Once on the page, tap Chrome's menu button <span className="font-mono bg-slate-800 px-1 rounded font-bold">⋮</span> in top right, then tap <strong className="text-emerald-400">"Install app"</strong> or <strong className="text-emerald-400">"Add to Home screen"</strong>.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <div className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-extrabold w-5 h-5 rounded-full flex items-center justify-center shrink-0">2</div>
+                        <div className="flex flex-col gap-0.5">
+                          <strong className="text-white">iOS / iPhone devices (Safari):</strong>
+                          <p className="text-slate-400 leading-relaxed">
+                            Click <strong className="text-[#a5a6df]">"Open Direct Mobile Connection"</strong>. Tap Safari's bottom Share icon <span className="font-mono bg-slate-800 px-1 rounded font-bold">⎋</span>, and tap <strong className="text-emerald-400">"Add to Home Screen"</strong>.
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <div className="text-indigo-400 font-extrabold w-5 h-5 rounded-full bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center shrink-0">ℹ</div>
+                        <div className="flex flex-col gap-0.5">
+                          <strong className="text-white">What happens next?</strong>
+                          <p className="text-slate-400 leading-relaxed">
+                            The app installs directly on your phone and appears as a standard launcher icon. It locks to portrait mode, supports full sandboxed cryptography offline, and bypasses any URL/iframe connection problems!
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex gap-2 justify-end mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowMobileInstallGuide(false)}
+                    className="bg-[#24253a] hover:bg-[#2c2d46] text-white px-4 py-2 rounded-lg font-bold text-xs cursor-pointer transition-colors"
+                  >
+                    Got it!
+                  </button>
+                </div>
+
+              </div>
+            </div>
+          )}
 
         </div>
       )}

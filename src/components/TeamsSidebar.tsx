@@ -12,7 +12,8 @@ import {
   RefreshCw, 
   LogOut,
   X,
-  Search
+  Search,
+  Smartphone
 } from 'lucide-react';
 import { Team, Channel, ChatRoom, User } from '../types.js';
 
@@ -29,6 +30,7 @@ interface TeamsSidebarProps {
   onLogout: () => void;
   onRefreshAll: () => void;
   onCreateGroupChat: (name: string, selectedMemberIds: string[]) => void;
+  onShowMobileHelp?: () => void;
 }
 
 export default function TeamsSidebar({
@@ -43,7 +45,8 @@ export default function TeamsSidebar({
   onStartDirectChat,
   onLogout,
   onRefreshAll,
-  onCreateGroupChat
+  onCreateGroupChat,
+  onShowMobileHelp
 }: TeamsSidebarProps) {
   // Navigation lists expansion states
   const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>({
@@ -569,14 +572,27 @@ export default function TeamsSidebar({
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={onLogout}
-              className="text-slate-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition-colors"
-              title="Switch E2EE Identity certificate"
-            >
-              <LogOut className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1">
+              {onShowMobileHelp && (
+                <button
+                  type="button"
+                  onClick={onShowMobileHelp}
+                  className="text-indigo-500 hover:text-indigo-700 p-2 rounded hover:bg-indigo-50 transition-colors cursor-pointer"
+                  title="Mobile Download & PWA Installer"
+                >
+                  <Smartphone className="w-4 h-4" />
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={onLogout}
+                className="text-slate-400 hover:text-red-600 p-2 rounded hover:bg-red-50 transition-colors cursor-pointer"
+                title="Switch E2EE Identity certificate"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         )}
       </div>
