@@ -1,0 +1,18 @@
+{
+  "short_name": "E2EE Chat",
+  "name": "E2EE Secure Group Chat",
+  "description": "Real-time end-to-end encrypted direct messaging and channel groups with secure key exchange.",
+  "icons": [
+    {
+      "src": "/launcher_icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#11121d",
+  "theme_color": "#6264A7",
+  "display": "standalone",
+  "orientation": "portrait"
+}
